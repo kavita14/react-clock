@@ -47,7 +47,7 @@ export class CircleSlider extends React.Component<IProps, IState> {
         circleWidth: 5,
         progressWidth: 20,
         knobRadius: 20,
-        stepSize: 1,
+        stepSize: 60,
         min: 0,
         max: 100,
         disabled: false,
@@ -73,7 +73,6 @@ export class CircleSlider extends React.Component<IProps, IState> {
             currentStepValue: 0,
             isMouseMove: false,
         };
-
         const {
             min,
             max,
@@ -148,9 +147,10 @@ export class CircleSlider extends React.Component<IProps, IState> {
     public getPointPosition = (): IPoint => {
         const center = this.getCenter();
         const angle = this.getAngle();
+        console.log("get angle in position===",angle)
         return {
             x: center + this.radius * Math.cos(angle),
-            y: center + this.radius * Math.sin(angle),
+            y: angle>2 ?  center + this.radius * Math.sin(angle): 16;
         };
     };
 
@@ -238,66 +238,31 @@ export class CircleSlider extends React.Component<IProps, IState> {
         const { currentStepValue } = this.state;
         const offset = shadow ? "5px" : "0px";
         const { x, y } = this.getPointPosition();
+        console.log("position x===",x);
+        console.log("position y===",x);
+
         const center = this.getCenter();
+        console.log("center y===",center);
+        console.log("angle===",this.getAngle());
         const isAllGradientColorsAvailable =
             gradientColorFrom && gradientColorTo;
-        return (
+        return (<div>
             <svg
                 ref={svg => (this.svg = svg)}
-                width={`${size}px`}
-                height={`${size}px`}
-                viewBox={`0 0 ${size} ${size}`}
-                onMouseDown={this.handleMouseDown}
-                onTouchStart={this.handleTouchStart}
-                style={{
-                    padding: offset,
-                    boxSizing: "border-box",
-                }}
+
             >
                 <g>
                     <circle
                         style={{
                             strokeWidth: circleWidth!,
-                            stroke: circleColor,
+                            stroke: "#1f2226",
                             fill: "none",
                         }}
                         r={this.radius}
                         cx={center}
                         cy={center}
                     />
-                    {isAllGradientColorsAvailable && (
-                        <defs>
-                            <linearGradient
-                                id="gradient"
-                                x1="0"
-                                x2="0"
-                                y1="0"
-                                y2="1"
-                            >
-                                <stop
-                                    offset="0%"
-                                    stopColor={gradientColorFrom}
-                                />
-                                <stop
-                                    offset="100%"
-                                    stopColor={gradientColorTo}
-                                />
-                            </linearGradient>
-                        </defs>
-                    )}
-                    <path
-                        style={{
-                            strokeLinecap: "round",
-                            strokeWidth: progressWidth!,
-                            stroke: isAllGradientColorsAvailable
-                                ? "url(#gradient)"
-                                : progressColor,
-                            fill: "none",
-                        }}
-                        d={this.getPath()}
-                    />
-                    {shadow && (
-                        <filter id="dropShadow" filterUnits="userSpaceOnUse">
+                    <filter id="dropShadow" filterUnits="userSpaceOnUse">
                             <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
                             <feOffset dx="2" dy="2" />
                             <feComponentTransfer>
@@ -308,7 +273,6 @@ export class CircleSlider extends React.Component<IProps, IState> {
                                 <feMergeNode in="SourceGraphic" />
                             </feMerge>
                         </filter>
-                    )}
                     <circle
                         style={{
                             fill: knobColor,
@@ -318,23 +282,78 @@ export class CircleSlider extends React.Component<IProps, IState> {
                         r={knobRadius!}
                         cx={x}
                         cy={y}
+                        onMouseDown={this.handleMouseDown}
+                        onTouchStart={this.handleTouchStart}
                     />
-                    {showTooltip && (
-                        <text
-                            x={size! / 2}
-                            y={size! / 2 + tooltipSize! / 3}
-                            textAnchor={"middle"}
-                            fontSize={tooltipSize!}
-                            fontFamily="Arial"
-                            fill={tooltipColor}
-                        >
-                            {showPercentage
-                                ? `${currentStepValue}%`
-                                : currentStepValue}
-                        </text>
-                    )}
+
+
+        <text
+                        x={size! / 2}
+                        y={size! / 2 + tooltipSize! / 3}
+                        textAnchor={"middle"}
+                        fontSize={tooltipSize!}
+                        fontFamily="Arial"
+                        fill={tooltipColor}
+                    >
+                    {hhmmss(currentStepValue)}
+
+
+                    </text>
+
+
+
                 </g>
+
             </svg>
+
+            <svg style={{marginLeft:"200px",marginTop:"100px"}}>
+        <circle style={{
+            strokeWidth: circleWidth!,
+            stroke: "#1f2226",
+            fill: "none",
+        }} cx={0} cy={80} r={65} />
+        <filter id="dropShadow" filterUnits="userSpaceOnUse">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+                <feOffset dx="2" dy="2" />
+                <feComponentTransfer>
+                    <feFuncA type="linear" slope="0.3" />
+                </feComponentTransfer>
+                <feMerge>
+                    <feMergeNode />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        <circle
+            style={{
+                fill: knobColor,
+                cursor: disabled ? "not-allowed" : "pointer",
+            }}
+            filter={shadow ? "url(#dropShadow)" : "none"}
+            r={knobRadius!}
+            cx={x}
+            cy={y}
+            onMouseDown={this.handleMouseDown}
+            onTouchStart={this.handleTouchStart}
+        />
+    </svg>
+
+    <svg>
+    <image xlinkHref="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvYAPF4pXGYWkX21mg80LBOYKEOy8EdDyTN1OLCYa_NrrvN5sp_Q" />
+</svg>
+
+</div>
         );
     }
+}
+
+function pad(num) {
+    return ("0"+num).slice(-2);
+}
+function hhmmss(secs) {
+  var minutes = Math.floor(secs / 60);
+  secs = secs%60;
+  var hours = Math.floor(minutes/60)
+  minutes = minutes%60;
+  return `${pad(hours)}:${pad(minutes)}`;
+  // return pad(hours)+":"+pad(minutes)+":"+pad(secs); for old browsers
 }
